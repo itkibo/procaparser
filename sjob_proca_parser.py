@@ -115,11 +115,11 @@ def extractMonthData(rows, mNum):
                 monthData['workdays'] += 1
 
             monthData['days'][dNum] = {
-                'day': dNum,
-                'wday': dWeek,
-                'wday_descr': dayWeek[dWeek],
-                'dtype': dType,
-                'dtype_descr': dDescr,
+                'day_num': dNum,
+                'wday_num': dWeek,
+                'wday_str': dayWeek[dWeek],
+                'dtype_num': dType,
+                'dtype_str': dDescr,
             }
 
     return monthData
