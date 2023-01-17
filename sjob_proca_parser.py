@@ -2,28 +2,7 @@
 #
 # sjob_proca_parser.py - extracts production calendar from https://superjob.ru
 # parsed result is represented as a dictionary in JSON file(s)
-#
-# Result dictionary structure description
-# dctYear = {
-#     2023: {
-#         1: {
-#             'name': 'Январь',
-#             'total': 31,
-#             'restdays': 14,
-#             'workdays': 17,
-#             'days': {
-#                 'day_num': 1,
-#                 'wday_num': 7,
-#                 'wday_str': 'Воскресенье',
-#                 'dtype_num': 3,
-#                 'dtype_str': 'Праздничный день',
-#             }
-#         },
-#         2: {
-#             ...
-#         },
-#     }
-# }
+
 
 import requests
 import bs4
@@ -32,17 +11,16 @@ import json
 
 # FUNC
 
-# Returns dictionary with structured month data
-def extractMonthData(rows, mNum):
+# Returns dictionaries with description of days/months
+def getDescription():
 
-    dayType = {
+    dayTypes = {
         0: 'Рабочий день',
         1: 'Выходной день',
         2: 'Сокращенный день',
         3: 'Праздничный день',
     }
-
-    dayWeek = {
+    dayNames = {
         1: 'Понедельник',
         2: 'Вторник',
         3: 'Среда',
@@ -51,8 +29,7 @@ def extractMonthData(rows, mNum):
         6: 'Суббота',
         7: 'Воскресенье',
     }
-
-    monthName = {
+    monthNames = {
         1: 'Январь',
         2: 'Февраль',
         3: 'Март',
@@ -67,8 +44,14 @@ def extractMonthData(rows, mNum):
         12: 'Декабрь',
     }
 
+    return {'dtypes': dayTypes, 'dnames': dayNames, 'mnames': monthNames}
+
+
+# Returns dictionary with structured month data
+def extractMonthData(rows, mNum, description=getDescription()):
+
     monthData = {
-        'name': monthName[int(mNum)],
+        'name': description['mnames'][int(mNum)],
         'countdays': 0,
         'workdays': 0,
         'restdays': 0,
@@ -78,6 +61,7 @@ def extractMonthData(rows, mNum):
     # Iterate over rows of month block/grid
     for row in rows:
 
+        # Get cells of a row of grid
         cells = row.select('div._1MN0y')
 
         # Iterate over cells in row, index is equal day of week
@@ -90,36 +74,42 @@ def extractMonthData(rows, mNum):
                 # This cell is not a day of current month, skip it
                 continue
 
-            dNum = int(cell.select_one("span._3d27N").string)
+            # Extract day number
+            if dNum := cell.select_one("span._3d27N").string:
+                try:
+                    dNum = int(dNum)
+                except ValueError:
+                    continue
+
             monthData['countdays'] += 1
 
             # Default values of cell
             dType = 1
-            dDescr = ''
+            dEvent = ''
 
-            # Depends on css class set type of a day + description if exists
+            # Depends on css class chhose type of a day
             if '_1YS-8' in classes:
-                # Pre holiday (light green), get description from tooltip
+                # Pre holiday (light green), get event string from tooltip
                 dType = 2
-                dDescr = cell.select_one('div._30A54').string
+                dEvent = cell.select_one('div._30A54').string
                 monthData['workdays'] += 1
             elif '_1c_LS' in classes:
-                # Holiday/weekend (green), get description from tooltip
+                # Holiday/weekend (green), get event string from tooltip
                 dType = 3
-                dDescr = cell.select_one('div._30A54').string
+                dEvent = cell.select_one('div._30A54').string
                 monthData['restdays'] += 1
             else:
                 # This is a ordinary workday
                 dType = 0
-                dDescr = dayType[dType]
+                dEvent = description['dtypes'][dType]
                 monthData['workdays'] += 1
 
             monthData['days'][dNum] = {
                 'day_num': dNum,
                 'wday_num': dWeek,
-                'wday_str': dayWeek[dWeek],
+                'wday_str': description['dnames'][dWeek],
                 'dtype_num': dType,
-                'dtype_str': dDescr,
+                'dtype_str': dEvent,
             }
 
     return monthData
@@ -140,17 +130,20 @@ def requestPageData(baseURL, yNum):
 
 # EXEC
 
-# Iterate over pages to request (production calendar years)
-for yearNum in (2023, 2022, 2021, 2020):
+basicURL = 'https://www.superjob.ru/proizvodstvennyj_kalendar'
 
-    if not (pageData := requestPageData('https://www.superjob.ru/proizvodstvennyj_kalendar', yearNum)):
+# Iterate over pages to request (production calendar years)
+for yearNum in range(2020, 2025):
+
+    if not (pageData := requestPageData(basicURL, yearNum)):
+        print('Error occured due request')
         continue
 
     dctYear = {
         yearNum: {}
     }
-
     monthNum = 1
+
     for monthGrid in pageData.find_all('div', class_='_3O83e _3f-yB'):
         # Get month area with divs as rows
         rows = monthGrid.select('div._1OyqE')
@@ -160,7 +153,14 @@ for yearNum in (2023, 2022, 2021, 2020):
         dctYear[yearNum][monthNum] = dctMonth
         monthNum += 1
 
+    if len(dctYear[yearNum]) == 0:
+        print(f'Year {yearNum} skipped')
+        continue
+
     # Saves year data into json file
     jsonData = json.dumps(dctYear, ensure_ascii=False)
-    with open(f'sjob_proca_{yearNum}.json', "w") as outfile:
+    fileName = f'sjob_proca_{yearNum}.json'
+    with open(fileName, "w") as outfile:
         outfile.write(jsonData)
+
+    print(f'JSON file is ready: {fileName}')
