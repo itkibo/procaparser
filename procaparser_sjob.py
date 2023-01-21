@@ -1,7 +1,7 @@
 #! python3
 #
-# sjob_proca_parser.py - extracts production calendar from https://superjob.ru
-# parsed result is represented as a dictionary in JSON file(s)
+# procaparser_sjob.py - extracts production calendar from https://superjob.ru
+# parsed result(s) is represented as a dictionary in JSON file(s)
 
 
 import requests
