@@ -75,7 +75,7 @@ print(f'Выходных: {january.days_total}, рабочих дней: {januar
 # Is 7 of January is rest day?
 print('7 Января выходной') if january.isRest(7) else print('рабочий день')
 # Is work day?
-print('31 Января рабочий') if january.isRest(7) else print('выходной день')
+print('31 Января рабочий') if january.isWork(31) else print('выходной день')
 
 # Get day 7 of January
 day7 = january.getDay(7)
