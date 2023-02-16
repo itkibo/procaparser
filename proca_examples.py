@@ -1,7 +1,7 @@
 #! python3
 #
-# Here is some examples of working with production calendar JSON files
-# with using proca module
+# Here is some examples of using proca classes
+# and working with production calendar data stored in JSON files
 
 
 import proca
@@ -17,127 +17,72 @@ def readJSON(fileName):
 
 # Construct object 2023 year production calendar
 # from source JSON file
-year = proca.ProcaYear(readJSON('sjob_proca_2023.json'))
-print(f'Год: {year.year_num}')
+year = proca.ProcaYear(readJSON('sjob_2023_min.json'))
 
-# Get thirst month of a year
-january = year.getMonth(1)
+# Make 1st quarter months of the year
+months = year(1, 2, 3, 4)
 
-# These all the same result
-january = year.getMonth(1)
-january = year.getMonth('1')
+# Get January by alias 'jan'
+jan = months.jan
 
-# Get the same result using select method
-january = year.select(1)
-january = year.select('1')
+# Print January days table
+print(jan)
 
-# Show January info
-print(
-    f'{january.mon_name}\n'
-    f'{january.days_total} - всего дней\n'
-    f'{january.days_rest} - выходных/праздничных\n'
-    f'{january.days_work} - рабочих\n'
-    )
+# Show January info using month fields
+print(f'{jan.name}:',
+      f'рабочих дн: {jan.twork}',
+      f'выходных дн: {jan.trest}',
+      f'всего дн: {jan.tdays}',
+      sep='\n')
 
-# Print days in human readable table
-january.printMe()
-# Print days with format
-january.printMe(
-        {'day_num': 5, 'wday_str': 12, 'dtype_str': 40},
-        gap='-',
-        hide=True
-    )
+# Get 7th day of January by alias 'd7'
+d7 = jan.days.d7
 
-# Days property contains dictionary with all days
-days = january.days
-print(days)
+# Print day info table
+print(d7)
 
-# Get 31 day of January, it's dictionary
-day = january.getDay(31)
+# Show day info using day fields
+print(f'дата: {d7.dnum:02d}.{d7.mnum:02d}.{d7.ynum}',
+      f'день недели: {d7.name}',
+      f'выходной день: {"Да" if d7.rest == 1 else "Нет"}',
+      f'праздник: {d7.ttip if d7.dtype == 3 else "Нет"}',
+      sep='\n')
 
-# These all the same result
-day = january.getDay('31')
+# Make 12 months (it's default if not args passed)
+months = year()
 
-# Get same day using 'month.day' format
-day = year.select(1.31)
-day = year.select('1.31')
-day = year.select('01.31')
+# Table header
+stick = ' | '
+fields_width = {'mnum': 2, 'name': 8, 'tdays': 4, 'twork': 4, 'trest': 4}
+fields_ru = {'mnum': '#', 'name': 'мес.', 'tdays': 'дн.',
+             'twork': 'раб.', 'trest': 'вых.'}
 
-# Print day dictionary as is
-print(day)
-# Print day dictionary more readable
-print(*[str(f'{k}: {v}') for k, v in year.select('01.07').items()], sep='\n')
+# Show table header
+print(*[fields_ru[f].ljust(w) for f, w in fields_width.items()], sep=stick)
 
-# Is it rest day?
-print(f'7 Января праздничный: {january.isRest(7)}')
-# Is it work day?
-print(f'31 Января рабочий: {january.isWork(31)}')
-# Print only non-workable days in January
-print(*[
-    f'{str(dNum).rjust(2, "0")} {january.mon_name[0:3]} {year.year_num}г. - выходной'
-    for dNum in range(1, len(january.days) + 2) if january.isRest(dNum)
-    ], sep='\n')
+# Show top line
+print('-' * (sum(fields_width.values()) + len(stick)*4))
 
-# Print all months of year as table
-year.printMe()
+# Show months info table
+for m in months:
+    row = []
+    for f, w in fields_width.items():
+        if f == 'mnum':
+            # 2 pos digit with leading zero
+            cell = f'{getattr(m, f):02d}'.rjust(w)
+        else:
+            cell = str(getattr(m, f)).ljust(w)
+        row.append(cell)
+    print(*row, sep=stick)
 
-# Count total days in year
-print(f'Дней в году: {sum([year.getMonth(mNum).days_total for mNum in range(1, 13)])}')
+# Show bottom line
+print('-' * (sum(fields_width.values()) + len(stick)*4))
 
-# Print all holidays/weekends + count total non-work days
-totRest = 0
-mList = [year.getMonth(mNum) for mNum in range(1, 13)]
-for month in mList:
-    print(f'{month.mon_name}')
-    print(f'Празничные и выходные: {month.days_rest} дн.')
-    for dNum in range(0, len(month.days) + 1):
-        if month.isRest(dNum):
-            day = month.getDay(dNum)
-            totRest += 1
-            print(
-                f'{str(year.year_num)}.{str(month.mon_num).rjust(2, "0")}.{str(day["day_num"]).rjust(2, "0")}',
-                f'{day["wday_str"].ljust(12)}',
-                f'{day["dtype_str"]}',
-                sep=' '
-                )
-
-    print(f'{"-"*72}')
-
-print(f'Всего нерабочих дней: {totRest}')
-
-
-
-import proca
-import json
-
-# Construct object 2023 year production calendar
-# from source JSON file using ProcaYear
-year = proca.ProcaYear(readJSON('sjob_proca_2023.json'))
-
-# Get month January
-january = year.getMonth(1)
-# Print some January info
-print(f'Выходных: {january.days_total}, рабочих дней: {january.days_work}')
-
-# Is 7 of January is rest day?
-print(january.isRest(7))
-# Is work day?
-print(january.isWork(31))
-
-# Get day 7 of January
-day7 = january.getDay(7)
-# Same result by using selector format month.day
-day7 = year.select(1.7)
-# It' the same
-day7 = year.select('01.07')
-
-# What is weekday of 7 of January?
-print(day7['wday_str'])
-
-# Print all days of January with formatted table
-# field_name: column_width
-january.printMe(
-    {'day_num': 5, 'wday_str': 12, 'dtype_str': 40},
-    gap='-',
-    hide=True
-)
+# Calculate totals by 12 months
+fields_total = ('tdays', 'twork', 'trest')
+totals = {f: sum(getattr(m, f, 0) for m in months) for f in fields_total}
+# Show table totals
+print(*[str(totals[f]).ljust(w)
+        if f in fields_total
+        else ''.ljust(w)
+        for f, w in fields_width.items()], sep=' | ')
