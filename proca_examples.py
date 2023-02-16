@@ -17,7 +17,7 @@ def readJSON(fileName):
 
 # Construct object 2023 year production calendar
 # from source JSON file
-year = proca.ProcaYear(readJSON('sjob_2023_min.json'))
+year = proca.ProcaYear(readJSON('sjob_min_2023.json'))
 
 # Make 1st quarter months of the year
 months = year(1, 2, 3, 4)
