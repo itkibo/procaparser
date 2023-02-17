@@ -1,12 +1,12 @@
 # procaparser.py
-Extracts production calendar from https://superjob.ru  
-Parsed result is represented as a dictionary and stored JSON file(s)  
+Web page parser, extracts production calendar from https://superjob.ru  
+Parsed result is a structured dictionary stored in JSON file(s)  
 
-Парсит производственный календарь разных лет с сайта https://superjob.ru  
-Результат сохраняет структурой словаря в JSON файл(ы)
+Парсер извлекает производственный календарь разных лет с сайта https://superjob.ru  
+Результат сохраняется структурой словаря в JSON файл(ы)
 
-## Example of result dictionary structure
 
+> Example of procaparser result dictionary structure
 ```python
 {
   '2023':
@@ -33,18 +33,18 @@ Parsed result is represented as a dictionary and stored JSON file(s)
 Contains proca classes for working with production calendar data  
 proca builds objects of a calendar based on dictionary data  
 such data in JSON files may be parsed and prepared with procaparser  
-or just get ready JSON files from this repository  
+or just get JSON files from this repository  
 
 Содержит proca классы для работы с производственными календарями  
 proca создает объекты календарей на основе словаря с данными  
 такие данные в JSON формате могут быть спарсены при помощи procaparser  
-или есть уже готовые JSON файлы данных в этом репозитория  
+или есть уже готовые JSON файлы данных в этом репозитории  
 
 # proca_examples.py
-Same python3 code examples of using proca is in proca_examples.py  
+Code examples of using proca is in proca_examples.py  
 Примеры python кода в файле proca_examples.py  
 
-## Examples of using proca classes over JSON file (2023 prod calendar data)
+> Code examples with proca classes
 
 ```python
 import proca
@@ -71,7 +71,7 @@ jan = months.jan
 # Print January days table
 print(jan)
 ```
-
+`result:`
 ```
 2023.01.01 | 7 Воскресенье | 3 Праздничный день. Новогодние каникулы
 2023.01.02 | 1 Понедельник | 3 Праздничный день
@@ -113,6 +113,7 @@ print(f'{jan.name}:',
       f'всего дн: {jan.tdays}',
       sep='\n')
 ```
+`result:`
 ```
 Январь:
 рабочих дн: 17
@@ -133,6 +134,7 @@ print(f'дата: {d7.dnum:02d}.{d7.mnum:02d}.{d7.ynum}',
       f'праздник: {d7.ttip if d7.dtype == 3 else "Нет"}',
       sep='\n')
 ```
+`result:`
 ```
 2023.01.07 | 6 Суббота     | 3 Праздничный день. Рождество Христово
 
@@ -181,6 +183,7 @@ print(*[str(totals[f]).ljust(w)
         else ''.ljust(w)
         for f, w in fields_width.items()], sep=' | ')
 ```
+`result:`
 ```
 #  | мес.     | дн.  | раб. | вых.
 ----------------------------------
